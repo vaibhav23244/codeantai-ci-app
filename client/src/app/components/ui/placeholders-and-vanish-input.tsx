@@ -14,21 +14,22 @@ export function PlaceholdersAndVanishInput({
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
-
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Starts the animation
   const startAnimation = () => {
     intervalRef.current = setInterval(() => {
       setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length);
     }, 3000);
   };
 
+  // Handles visibility change to start or stop animation
   const handleVisibilityChange = () => {
     if (document.visibilityState !== "visible" && intervalRef.current) {
-      clearInterval(intervalRef.current); // Clear the interval when the tab is not visible
+      clearInterval(intervalRef.current); // Stop the animation when the tab is not visible
       intervalRef.current = null;
     } else if (document.visibilityState === "visible") {
-      startAnimation(); // Restart the interval when the tab becomes visible
+      startAnimation(); // Restart the animation when the tab becomes visible
     }
   };
 
@@ -38,7 +39,7 @@ export function PlaceholdersAndVanishInput({
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearInterval(intervalRef.current); // Clean up the interval on component unmount
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -52,6 +53,7 @@ export function PlaceholdersAndVanishInput({
   const [value, setValue] = useState("");
   const [animating, setAnimating] = useState(false);
 
+  // Draws the current input text on the canvas
   const draw = useCallback(() => {
     if (!inputRef.current) return;
     const canvas = canvasRef.current;
@@ -108,6 +110,7 @@ export function PlaceholdersAndVanishInput({
     draw();
   }, [value, draw]);
 
+  // Animation logic
   const animate = (start: number) => {
     const animateFrame = (pos: number = 0) => {
       requestAnimationFrame(() => {
@@ -115,7 +118,7 @@ export function PlaceholdersAndVanishInput({
         for (let i = 0; i < newDataRef.current.length; i++) {
           const current = newDataRef.current[i];
           if (current.r <= 0) {
-            continue; // Skip this iteration if the radius is 0 or below
+            continue; // Skip if radius is zero or negative
           }
           if (current.x < pos) {
             newArr.push(current);
@@ -126,7 +129,7 @@ export function PlaceholdersAndVanishInput({
             newArr.push(current);
           }
         }
-        newDataRef.current = newArr; // Now newDataRef is being updated correctly
+        newDataRef.current = newArr; // Update the data reference after iteration
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) {
           ctx.clearRect(pos, 0, 800, 800);
@@ -152,12 +155,14 @@ export function PlaceholdersAndVanishInput({
     animateFrame(start);
   };
 
+  // Handle Enter key press
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !animating) {
       vanishAndSubmit();
     }
   };
 
+  // Trigger animation and form submission
   const vanishAndSubmit = () => {
     setAnimating(true);
     draw();
@@ -172,10 +177,11 @@ export function PlaceholdersAndVanishInput({
     }
   };
 
+  // Submit the form
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     vanishAndSubmit();
-    onSubmit && onSubmit(e);
+    if (onSubmit) onSubmit(e);
   };
 
   return (
@@ -188,7 +194,7 @@ export function PlaceholdersAndVanishInput({
     >
       <canvas
         className={cn(
-          "absolute pointer-events-none  text-base transform scale-50 top-[20%] left-2 sm:left-8 origin-top-left filter invert pr-20",
+          "absolute pointer-events-none text-base transform scale-50 top-[20%] left-2 sm:left-8 origin-top-left filter invert pr-20",
           !animating ? "opacity-0" : "opacity-100"
         )}
         ref={canvasRef}
@@ -197,7 +203,7 @@ export function PlaceholdersAndVanishInput({
         onChange={(e) => {
           if (!animating) {
             setValue(e.target.value);
-            onChange && onChange(e);
+            if (onChange) onChange(e);
           }
         }}
         onKeyDown={handleKeyDown}
