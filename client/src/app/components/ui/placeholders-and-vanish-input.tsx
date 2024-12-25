@@ -25,10 +25,10 @@ export function PlaceholdersAndVanishInput({
 
   const handleVisibilityChange = () => {
     if (document.visibilityState !== "visible" && intervalRef.current) {
-      clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current); // Clear the interval when the tab is not visible
       intervalRef.current = null;
     } else if (document.visibilityState === "visible") {
-      startAnimation();
+      startAnimation(); // Restart the interval when the tab becomes visible
     }
   };
 
@@ -114,20 +114,19 @@ export function PlaceholdersAndVanishInput({
         const newArr = [];
         for (let i = 0; i < newDataRef.current.length; i++) {
           const current = newDataRef.current[i];
+          if (current.r <= 0) {
+            continue; // Skip this iteration if the radius is 0 or below
+          }
           if (current.x < pos) {
             newArr.push(current);
           } else {
-            if (current.r <= 0) {
-              current.r = 0;
-              continue;
-            }
             current.x += Math.random() > 0.5 ? 0.5 : -0.5;
             current.y += Math.random() > 0.5 ? 0.5 : -0.5;
             current.r -= 0.05 * Math.random();
             newArr.push(current);
           }
         }
-        newDataRef.current = newArr;
+        newDataRef.current = newArr; // Now newDataRef is being updated correctly
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) {
           ctx.clearRect(pos, 0, 800, 800);
